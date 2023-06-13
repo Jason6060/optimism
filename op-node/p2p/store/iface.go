@@ -11,9 +11,9 @@ import (
 
 type TopicScores struct {
 	TimeInMesh               float64 `json:"timeInMesh"` // in seconds
-	FirstMessageDeliveries   uint64  `json:"firstMessageDeliveries"`
-	MeshMessageDeliveries    uint64  `json:"meshMessageDeliveries"`
-	InvalidMessageDeliveries uint64  `json:"invalidMessageDeliveries"`
+	FirstMessageDeliveries   float64 `json:"firstMessageDeliveries"`
+	MeshMessageDeliveries    float64 `json:"meshMessageDeliveries"`
+	InvalidMessageDeliveries float64 `json:"invalidMessageDeliveries"`
 }
 
 type GossipScores struct {
@@ -37,8 +37,11 @@ type ScoreDatastore interface {
 	// GetPeerScores returns the current scores for the specified peer
 	GetPeerScores(id peer.ID) (PeerScores, error)
 
+	// GetPeerScore returns the current combined score for the specified peer
+	GetPeerScore(id peer.ID) (float64, error)
+
 	// SetScore applies the given store diff to the specified peer
-	SetScore(id peer.ID, diff ScoreDiff) error
+	SetScore(id peer.ID, diff ScoreDiff) (PeerScores, error)
 }
 
 // ScoreDiff defines a type-safe batch of changes to apply to the peer-scoring record of the peer.

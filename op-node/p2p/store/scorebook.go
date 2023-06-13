@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	scoreCacheSize          = 100
-	scoreRecordExpiryPeriod = 24 * time.Hour
+	scoreCacheSize = 100
 )
 
 var scoresBase = ds.NewKey("/peers/scores")
@@ -56,8 +55,8 @@ func peerIDKey(id peer.ID) ds.Key {
 	return ds.NewKey(base32.RawStdEncoding.EncodeToString([]byte(id)))
 }
 
-func newScoreBook(ctx context.Context, logger log.Logger, clock clock.Clock, store ds.Batching) (*scoreBook, error) {
-	book, err := newRecordsBook[peer.ID, *scoreRecord](ctx, logger, clock, store, scoreCacheSize, scoreRecordExpiryPeriod, scoresBase, newScoreRecord, peerIDKey)
+func newScoreBook(ctx context.Context, logger log.Logger, clock clock.Clock, store ds.Batching, retain time.Duration) (*scoreBook, error) {
+	book, err := newRecordsBook[peer.ID, *scoreRecord](ctx, logger, clock, store, scoreCacheSize, retain, scoresBase, newScoreRecord, peerIDKey)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +78,17 @@ func (d *scoreBook) GetPeerScores(id peer.ID) (PeerScores, error) {
 	return record.PeerScores, nil
 }
 
-func (d *scoreBook) SetScore(id peer.ID, diff ScoreDiff) error {
-	return d.book.SetRecord(id, diff)
+func (d *scoreBook) GetPeerScore(id peer.ID) (float64, error) {
+	scores, err := d.GetPeerScores(id)
+	if err != nil {
+		return 0, err
+	}
+	return scores.Gossip.Total, nil
+}
+
+func (d *scoreBook) SetScore(id peer.ID, diff ScoreDiff) (PeerScores, error) {
+	v, err := d.book.SetRecord(id, diff)
+	return v.PeerScores, err
 }
 
 func (d *scoreBook) Close() {
