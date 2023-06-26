@@ -80,23 +80,23 @@ def devnet_prestate(paths):
         outfile_l2 = paths.genesis_l2_path
         outfile_rollup = paths.rollup_config_path
 
-        run_command(['go', 'run', 'cmd/main.go', 'genesis', 'devnet', '--deploy-config', temp_deploy_config, '--outfile.l1', outfile_l1, '--outfile.l2', outfile_l2, '--outfile.rollup', outfile_rollup], cwd=paths.op_node_dir)
+        run_command(['/usr/local/go/bin/go', 'run', 'cmd/main.go', 'genesis', 'devnet', '--deploy-config', temp_deploy_config, '--outfile.l1', outfile_l1, '--outfile.l2', outfile_l2, '--outfile.rollup', outfile_rollup], cwd=paths.op_node_dir)
         write_json(done_file, {})
 
     log.info('Bringing up L1.')
-    run_command(['docker-compose', 'up', '-d', 'l1'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'l1'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir
     })
     wait_up(8545)
 
     log.info('Bringing up L2.')
-    run_command(['docker-compose', 'up', '-d', 'l2'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'l2'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir
     })
     wait_up(9545)
 
     log.info('Bringing up the services.')
-    run_command(['docker-compose', 'up', '-d', 'op-proposer', 'op-batcher'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'op-node', 'op-proposer', 'op-batcher'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir,
         'L2OO_ADDRESS': '0x6900000000000000000000000000000000000000'
     })
@@ -110,7 +110,7 @@ def devnet_deploy(paths):
         write_json(paths.genesis_l1_path, GENESIS_TMPL)
 
     log.info('Starting L1.')
-    run_command(['docker-compose', 'up', '-d', 'l1'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'l1'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir
     })
     wait_up(8545)
@@ -129,11 +129,12 @@ def devnet_deploy(paths):
         addresses = read_json(paths.addresses_json_path)
     else:
         log.info('Deploying contracts.')
-        run_command(['yarn', 'hardhat', '--network', 'devnetL1', 'deploy', '--tags', 'l1'], env={
-            'CHAIN_ID': '900',
-            'L1_RPC': 'http://localhost:8545',
-            'PRIVATE_KEY_DEPLOYER': 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-        }, cwd=paths.contracts_bedrock_dir)
+        # NOTE: this will get error, run manually.
+        # run_command(['yarn', 'hardhat', '--network', 'devnetL1', 'deploy', '--tags', 'l1'], env={
+        #     'CHAIN_ID': '900',
+        #     'L1_RPC': 'http://localhost:8545',
+        #     'PRIVATE_KEY_DEPLOYER': 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+        # }, cwd=paths.contracts_bedrock_dir)
         contracts = os.listdir(paths.deployment_dir)
         addresses = {}
         for c in contracts:
@@ -160,7 +161,7 @@ def devnet_deploy(paths):
     else:
         log.info('Generating L2 genesis and rollup configs.')
         run_command([
-            'go', 'run', 'cmd/main.go', 'genesis', 'l2',
+            '/usr/local/go/bin/go', 'run', 'cmd/main.go', 'genesis', 'l2',
             '--l1-rpc', 'http://localhost:8545',
             '--deploy-config', devnet_cfg_orig,
             '--deployment-dir', paths.deployment_dir,
@@ -174,13 +175,13 @@ def devnet_deploy(paths):
         shutil.move(devnet_cfg_backup, devnet_cfg_orig)
 
     log.info('Bringing up L2.')
-    run_command(['docker-compose', 'up', '-d', 'l2'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'l2'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir
     })
     wait_up(9545)
 
     log.info('Bringing up everything else.')
-    run_command(['docker-compose', 'up', '-d', 'op-node', 'op-proposer', 'op-batcher'], cwd=paths.ops_bedrock_dir, env={
+    run_command(['docker-compose', '-f', 'docker-compose-metis.yml', 'up', '-d', 'op-node', 'op-proposer', 'op-batcher'], cwd=paths.ops_bedrock_dir, env={
         'PWD': paths.ops_bedrock_dir,
         'L2OO_ADDRESS': addresses['L2OutputOracleProxy'],
         'SEQUENCER_BATCH_INBOX_ADDRESS': rollup_config['batch_inbox_address']

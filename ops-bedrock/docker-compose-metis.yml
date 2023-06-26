@@ -105,11 +105,11 @@ services:
     environment:
       OP_PROPOSER_L1_ETH_RPC: http://l1:8545
       OP_PROPOSER_ROLLUP_RPC: http://op-node:8545
-      OP_PROPOSER_POLL_INTERVAL: 300s
+      OP_PROPOSER_POLL_INTERVAL: 2s
       OP_PROPOSER_NUM_CONFIRMATIONS: 1
       OP_PROPOSER_MNEMONIC: test test test test test test test test test test test junk
       OP_PROPOSER_L2_OUTPUT_HD_PATH: "m/44'/60'/0'/0/1"
-      OP_PROPOSER_L2OO_ADDRESS: "0x6900000000000000000000000000000000000000"
+      OP_PROPOSER_L2OO_ADDRESS: "${L2OO_ADDRESS}"
       OP_PROPOSER_PPROF_ENABLED: "true"
       OP_PROPOSER_METRICS_ENABLED: "true"
       OP_PROPOSER_ALLOW_NON_FINALIZED: "true"
@@ -154,22 +154,22 @@ services:
     volumes:
       - "/tmp/op_log:/op_log:ro"
 
-  relayer:
-    depends_on:
-      - l1
-      - l2
-      - op-node
-    deploy:
-      replicas: 0
-    build:
-      context: ..
-      dockerfile: ./ops/docker/Dockerfile.packages
-      target: message-relayer
-    image: ethereumoptimism/message-relayer:${DOCKER_TAG_MESSAGE_RELAYER:-latest}
-    entrypoint: ./relayer.sh
-    environment:
-      MESSAGE_RELAYER__L1_RPC_PROVIDER: http://l1:8545
-      MESSAGE_RELAYER__L2_RPC_PROVIDER: http://l2:8545
-      MESSAGE_RELAYER__L1_WALLET: '0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97'
-      MESSAGE_RELAYER__BEDROCK_L2_INDEX: 0
-      RETRIES: 60
+  # relayer:
+  #   depends_on:
+  #     - l1
+  #     - l2
+  #     - op-node
+  #   deploy:
+  #     replicas: 0
+  #   build:
+  #     context: ..
+  #     dockerfile: ./ops/docker/Dockerfile.packages
+  #     target: message-relayer
+  #   image: ethereumoptimism/message-relayer:${DOCKER_TAG_MESSAGE_RELAYER:-latest}
+  #   entrypoint: ./relayer.sh
+  #   environment:
+  #     MESSAGE_RELAYER__L1_RPC_PROVIDER: http://l1:8545
+  #     MESSAGE_RELAYER__L2_RPC_PROVIDER: http://l2:8545
+  #     MESSAGE_RELAYER__L1_WALLET: '0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97'
+  #     MESSAGE_RELAYER__BEDROCK_L2_INDEX: 0
+  #     RETRIES: 60

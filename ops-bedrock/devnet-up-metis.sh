@@ -36,7 +36,7 @@ OP_NODE="$PWD/op-node"
 CONTRACTS_BEDROCK="$PWD/packages/contracts-bedrock"
 NETWORK=devnetL1
 DEVNET="$PWD/.devnet"
-IGNORE_BUILD=1
+IGNORE_BUILD=0
 
 # Helper method that waits for a given URL to be up. Can't use
 # cURL's built-in retry logic because connection reset errors
