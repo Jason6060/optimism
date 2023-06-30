@@ -32,8 +32,12 @@ bindings: l1block-bindings \
 	basefee-vault-bindings \
 	legacy-erc20-eth-bindings \
 	dispute-game-factory-bindings \
+	fault-dispute-game-bindings \
 	standard-bridge-bindings \
-	cross-domain-messenger-bindings
+	cross-domain-messenger-bindings \
+	cannon-mips \
+	cannon-preimage-oracle\
+	legacy-ovm-eth-bindings
 
 version:
 	forge --version
@@ -128,17 +132,31 @@ l1-blocknumber-bindings: compile
 dispute-game-factory-bindings: compile
 	./gen_bindings.sh contracts/dispute/DisputeGameFactory.sol:DisputeGameFactory $(pkg)
 
+fault-dispute-game-bindings: compile
+	./gen_bindings.sh contracts/dispute/FaultDisputeGame.sol:FaultDisputeGame $(pkg)
+
 standard-bridge-bindings: compile
 	./gen_bindings.sh contracts/universal/StandardBridge.sol:StandardBridge $(pkg)
 
 cross-domain-messenger-bindings: compile
 	./gen_bindings.sh contracts/universal/CrossDomainMessenger.sol:CrossDomainMessenger $(pkg)
 
+cannon-mips: compile
+	./gen_bindings.sh contracts/cannon/MIPS.sol:MIPS $(pkg)
+
+cannon-preimage-oracle: compile
+	./gen_bindings.sh contracts/cannon/PreimageOracle.sol:PreimageOracle $(pkg)
+
+legacy-ovm-eth-bindings: compile
+	./gen_bindings.sh contracts/legacy/LegacyOVMETH.sol:LegacyOVMETH $(pkg)
+
 more:
 	go run ./gen/main.go \
 		-artifacts ../packages/contracts-bedrock/artifacts \
+		-forge-artifacts ../packages/contracts-bedrock/forge-artifacts \
 		-out ./bindings \
-		-contracts SystemConfig,OptimismMintableERC20Factory,L2StandardBridge,L1BlockNumber,LegacyMessagePasser,DeployerWhitelist,Proxy,OptimismPortal,L2ToL1MessagePasser,L2CrossDomainMessenger,SequencerFeeVault,L1Block,LegacyERC20ETH,WETH9,GovernanceToken,L1CrossDomainMessenger,L2ERC721Bridge,OptimismMintableERC721Factory,ProxyAdmin \
+		-contracts SystemConfig,OptimismMintableERC20Factory,L2StandardBridge,L1BlockNumber,LegacyMessagePasser,DeployerWhitelist,Proxy,OptimismPortal,L2ToL1MessagePasser,L2CrossDomainMessenger,SequencerFeeVault,L1Block,LegacyERC20ETH,WETH9,GovernanceToken,L1CrossDomainMessenger,L2ERC721Bridge,OptimismMintableERC721Factory,ProxyAdmin,MIPS,PreimageOracle,LegacyOVMETH \
+		-source-maps MIPS,PreimageOracle \
 		-package bindings
 
 mkdir:

@@ -91,7 +91,7 @@ func IsL1DevPredeploy(addr common.Address) bool {
 }
 
 func IsL2DevPredeploy(addr common.Address) bool {
-	return bytes.Equal(addr[0:2], []byte{0x42, 0x00})
+	return bytes.Equal(addr[0:2], []byte{0x42, 0x00}) || addr == common.HexToAddress("0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000")
 }
 
 // GetBlockFromTag will resolve a Block given an rpc block tag

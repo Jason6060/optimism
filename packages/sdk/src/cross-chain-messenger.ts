@@ -28,7 +28,14 @@ import {
   encodeVersionedNonce,
   getChainId,
 } from '@eth-optimism/core-utils'
-import { getContractInterface, predeploys } from '@eth-optimism/contracts'
+import {
+  getContractInterface,
+  // predeploys,
+} from '@eth-optimism/contracts'
+import {
+  predeploys,
+  // getContractDefinition,
+} from '@eth-optimism/contracts-bedrock'
 import * as rlp from 'rlp'
 
 import {
@@ -1886,7 +1893,7 @@ export class CrossChainMessenger {
       }
       return this.bridges.ETH.populateTransaction.deposit(
         ethers.constants.AddressZero,
-        predeploys.OVM_ETH,
+        predeploys.LegacyOVMETH,
         amount,
         await getOpts()
       )
@@ -1910,7 +1917,7 @@ export class CrossChainMessenger {
     ): Promise<TransactionRequest> => {
       return this.bridges.ETH.populateTransaction.withdraw(
         ethers.constants.AddressZero,
-        predeploys.OVM_ETH,
+        predeploys.LegacyOVMETH,
         amount,
         opts
       )

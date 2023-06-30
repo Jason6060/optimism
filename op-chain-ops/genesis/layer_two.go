@@ -62,7 +62,11 @@ func BuildL2Genesis(config *DeployConfig, l1StartBlock *types.Block) (*core.Gene
 			db.CreateAccount(codeAddr)
 			db.SetState(addr, ImplementationSlot, codeAddr.Hash())
 		} else {
-			db.DeleteState(addr, AdminSlot)
+			if addr == predeploys.LegacyERC20ETHAddr || addr == predeploys.LegacyOVMETHAddr {
+				db.CreateAccount(addr)
+			} else {
+				db.DeleteState(addr, AdminSlot)
+			}
 		}
 		if err := setupPredeploy(db, deployResults, storage, name, addr, codeAddr); err != nil {
 			return nil, err

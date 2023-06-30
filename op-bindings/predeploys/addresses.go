@@ -20,6 +20,8 @@ const (
 	ProxyAdmin                    = "0x4200000000000000000000000000000000000018"
 	BaseFeeVault                  = "0x4200000000000000000000000000000000000019"
 	L1FeeVault                    = "0x420000000000000000000000000000000000001a"
+	LegacyERC20ETH                = "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000"
+	LegacyOVMETH                  = "0x420000000000000000000000000000000000000A"
 )
 
 var (
@@ -40,6 +42,8 @@ var (
 	ProxyAdminAddr                    = common.HexToAddress(ProxyAdmin)
 	BaseFeeVaultAddr                  = common.HexToAddress(BaseFeeVault)
 	L1FeeVaultAddr                    = common.HexToAddress(L1FeeVault)
+	LegacyERC20ETHAddr                = common.HexToAddress(LegacyERC20ETH)
+	LegacyOVMETHAddr                  = common.HexToAddress(LegacyOVMETH)
 
 	Predeploys = make(map[string]*common.Address)
 )
@@ -47,6 +51,8 @@ var (
 // IsProxied returns true for predeploys that will sit behind a proxy contract
 func IsProxied(predeployAddr common.Address) bool {
 	switch predeployAddr {
+	case LegacyERC20ETHAddr:
+	case LegacyOVMETHAddr:
 	case WETH9Addr:
 	case GovernanceTokenAddr:
 	default:
@@ -73,4 +79,6 @@ func init() {
 	Predeploys["ProxyAdmin"] = &ProxyAdminAddr
 	Predeploys["BaseFeeVault"] = &BaseFeeVaultAddr
 	Predeploys["L1FeeVault"] = &L1FeeVaultAddr
+	Predeploys["LegacyERC20ETH"] = &LegacyERC20ETHAddr
+	Predeploys["LegacyOVMETH"] = &LegacyOVMETHAddr
 }

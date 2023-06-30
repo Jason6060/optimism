@@ -488,8 +488,12 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 		"l1FeeScalar":    config.GasPriceOracleScalar,
 	}
 	storage["LegacyERC20ETH"] = state.StorageValues{
+		"_name":   "Metis Token",
+		"_symbol": "Metis",
+	}
+	storage["LegacyOVMETH"] = state.StorageValues{
 		"_name":   "Ether",
-		"_symbol": "ETH",
+		"_symbol": "WETH",
 	}
 	storage["WETH9"] = state.StorageValues{
 		"name":     "Wrapped Ether",

@@ -239,6 +239,11 @@ func BuildL1DeveloperGenesis(config *DeployConfig) (*core.Genesis, error) {
 		}
 	}
 
+	if config.FundDevAccounts {
+		FundDevAccounts(memDB)
+		SetPrecompileBalances(memDB)
+	}
+
 	stateDB, err := backend.Blockchain().State()
 	if err != nil {
 		return nil, err
@@ -357,6 +362,9 @@ func deployL1Contracts(config *DeployConfig, backend *backends.SimulatedBackend)
 		{
 			Name: "WETH9",
 		},
+		{
+			Name: "METIS",
+		},
 	}...)
 	return deployer.Deploy(backend, constructors, l1Deployer)
 }
@@ -410,6 +418,7 @@ func l1Deployer(backend *backends.SimulatedBackend, opts *bind.TransactOpts, dep
 			opts,
 			backend,
 			predeploys.DevL1CrossDomainMessengerAddr,
+			predeploys.DevMetisAddr,
 		)
 	case "OptimismMintableERC20Factory":
 		_, tx, _, err = bindings.DeployOptimismMintableERC20Factory(
@@ -432,6 +441,13 @@ func l1Deployer(backend *backends.SimulatedBackend, opts *bind.TransactOpts, dep
 		_, tx, _, err = bindings.DeployWETH9(
 			opts,
 			backend,
+		)
+	case "METIS":
+		_, tx, _, err = bindings.DeployERC20(
+			opts,
+			backend,
+			"MetisDao Token",
+			"METIS",
 		)
 	case "L1ERC721Bridge":
 		_, tx, _, err = bindings.DeployL1ERC721Bridge(
