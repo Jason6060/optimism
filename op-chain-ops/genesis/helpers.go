@@ -21,7 +21,7 @@ var (
 	// l1PredeployNamespace represents the namespace of L1 predeploys
 	l1PredeployNamespace = common.HexToAddress("0x6900000000000000000000000000000000000000")
 	// bigL2PredeployNamespace represents the predeploy namespace as a big.Int
-	bigL2PredeployNamespace = new(big.Int).SetBytes(l2PredeployNamespace.Bytes())
+	BigL2PredeployNamespace = new(big.Int).SetBytes(l2PredeployNamespace.Bytes())
 	// bigL1PredeployNamespace represents the predeploy namespace as a big.Int
 	bigL1PredeployNamespace = new(big.Int).SetBytes(l1PredeployNamespace.Bytes())
 	// bigCodeNamespace represents the predeploy namespace as a big.Int
@@ -59,6 +59,17 @@ var DevAccounts = []common.Address{
 	common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
 	// Test account used by geth tests
 	common.HexToAddress("0x71562b71999873DB5b286dF957af199Ec94617F7"),
+	// Test accounts used by metis tests
+	common.HexToAddress("0xc213298c9e90e1ae7b4b97c95a7be1b811e7c933"),
+	common.HexToAddress("0xbdaa9698b241d6f7a4c7f466eec9ebeefbbc77c1"),
+	common.HexToAddress("0x09f4ddcd1b82ca497f1fe5a356e1d57225be1bdc"),
+	common.HexToAddress("0xa9a9c67d9828b2f767d2ed8c3e07a585455a8d0f"),
+	common.HexToAddress("0x7faaade6e3727ed489975740f7ad673252140c90"),
+	common.HexToAddress("0x306ec555c85c01eed22c5a1c11ed64f607dc9d62"),
+	common.HexToAddress("0x2300a18f64d01bcaec5697d6df5aca64b9b8733d"),
+	common.HexToAddress("0xb18e9817dfb67a99c28099a12d4ccf817626f4a0"),
+	common.HexToAddress("0xa4cabbc4d00936842297cb61c7ab0073e92b5351"),
+	common.HexToAddress("0xf7290f2d997d96a956f047ef4f02664c82767096"),
 }
 
 // The devBalance is the amount of wei that a dev account is funded with.
@@ -80,7 +91,7 @@ func IsL1DevPredeploy(addr common.Address) bool {
 }
 
 func IsL2DevPredeploy(addr common.Address) bool {
-	return bytes.Equal(addr[0:2], []byte{0x42, 0x00})
+	return bytes.Equal(addr[0:2], []byte{0x42, 0x00}) || addr == common.HexToAddress("0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000")
 }
 
 // GetBlockFromTag will resolve a Block given an rpc block tag
