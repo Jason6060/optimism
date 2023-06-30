@@ -128,7 +128,11 @@ abstract contract StandardBridge {
     /// @param _messenger   Address of CrossDomainMessenger on this network.
     /// @param _otherBridge Address of the other StandardBridge contract.
     /// @param _metis Address of the Metis token (L1StandardBridge required).
-    constructor(address payable _messenger, address payable _otherBridge, address _metis) {
+    constructor(
+        address payable _messenger,
+        address payable _otherBridge,
+        address _metis
+    ) {
         MESSENGER = CrossDomainMessenger(_messenger);
         OTHER_BRIDGE = StandardBridge(_otherBridge);
         METIS = _metis;
@@ -398,7 +402,8 @@ abstract contract StandardBridge {
                 address(OTHER_BRIDGE),
                 abi.encodeWithSelector(
                     this.finalizeBridgeERC20.selector,
-                    // Because this call will be executed on the remote chain, we reverse the order of
+                    // Because this call will be executed on the remote chain,
+                    // we reverse the order of
                     // the remote and local token addresses relative to their order in the
                     // finalizeBridgeERC20 function.
                     _remoteToken,
@@ -415,7 +420,8 @@ abstract contract StandardBridge {
                 address(OTHER_BRIDGE),
                 abi.encodeWithSelector(
                     this.finalizeBridgeERC20.selector,
-                    // Because this call will be executed on the remote chain, we reverse the order of
+                    // Because this call will be executed on the remote chain,
+                    // we reverse the order of
                     // the remote and local token addresses relative to their order in the
                     // finalizeBridgeERC20 function.
                     _remoteToken,

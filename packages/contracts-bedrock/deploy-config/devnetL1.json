@@ -44,6 +44,8 @@
   "l1GenesisBlockTimestamp": "0x64935846",
   "l1StartingBlockTag": "earliest",
   "l2GenesisRegolithTimeOffset": "0x0",
-  "l1MetisAddress": "0x69000000000000000000000000000000000000A0"
+  "l1MetisAddress": "0x69000000000000000000000000000000000000A0",
 
+  "faultGameAbsolutePrestate": 15,
+  "faultGameMaxDepth": 4
 }

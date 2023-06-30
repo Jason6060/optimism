@@ -44,7 +44,6 @@ library Predeploys {
     /// @notice Address of the DeployerWhitelist predeploy. No longer active.
     address internal constant DEPLOYER_WHITELIST = 0x4200000000000000000000000000000000000002;
 
-
     /// @custom:legacy
     /// @notice Address of the OVM_ETH predeploy. WETH in L1
     address internal constant LEGACY_OVM_ETH = 0x420000000000000000000000000000000000000A;

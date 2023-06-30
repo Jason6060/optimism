@@ -4,11 +4,14 @@ import { task, types } from 'hardhat/config'
 import '@nomiclabs/hardhat-ethers'
 import 'hardhat-deploy'
 import { providers, utils } from 'ethers'
-import {
-  predeploys,
-  getContractDefinition,
-} from '@eth-optimism/contracts-bedrock'
-import { sleep } from '@eth-optimism/core-utils'
+import { predeploys, sleep } from '@eth-optimism/core-utils'
+import Artifact__L2ToL1MessagePasser from '@eth-optimism/contracts-bedrock/forge-artifacts/L2ToL1MessagePasser.sol/L2ToL1MessagePasser.json'
+import Artifact__L2CrossDomainMessenger from '@eth-optimism/contracts-bedrock/forge-artifacts/L2CrossDomainMessenger.sol/L2CrossDomainMessenger.json'
+import Artifact__L2StandardBridge from '@eth-optimism/contracts-bedrock/forge-artifacts/L2StandardBridge.sol/L2StandardBridge.json'
+import Artifact__OptimismPortal from '@eth-optimism/contracts-bedrock/forge-artifacts/OptimismPortal.sol/OptimismPortal.json'
+import Artifact__L1CrossDomainMessenger from '@eth-optimism/contracts-bedrock/forge-artifacts/L1CrossDomainMessenger.sol/L1CrossDomainMessenger.json'
+import Artifact__L1StandardBridge from '@eth-optimism/contracts-bedrock/forge-artifacts/L1StandardBridge.sol/L1StandardBridge.json'
+import Artifact__LegacyOVMETH from '@eth-optimism/contracts-bedrock/forge-artifacts/LegacyOVMETH.sol/LegacyOVMETH.json'
 
 import {
   CrossChainMessenger,
@@ -96,34 +99,6 @@ task('deposit-ovmeth', 'Deposits ether onto L2 ovm_eth(WETH).')
       } as OEContractsLike
     }
 
-    const Artifact__L2ToL1MessagePasser = await getContractDefinition(
-      'L2ToL1MessagePasser'
-    )
-
-    const Artifact__L2CrossDomainMessenger = await getContractDefinition(
-      'L2CrossDomainMessenger'
-    )
-
-    const Artifact__L2StandardBridge = await getContractDefinition(
-      'L2StandardBridge'
-    )
-
-    const Artifact__OptimismPortal = await getContractDefinition(
-      'OptimismPortal'
-    )
-
-    const Artifact__L1CrossDomainMessenger = await getContractDefinition(
-      'L1CrossDomainMessenger'
-    )
-
-    const Artifact__L1StandardBridge = await getContractDefinition(
-      'L1StandardBridge'
-    )
-
-    const Artifact__LegacyOVMETH = await getContractDefinition(
-      'LegacyOVMETH'
-    )
-
     const OptimismPortal = new hre.ethers.Contract(
       contractAddrs.l1.OptimismPortal,
       Artifact__OptimismPortal.abi,
@@ -166,10 +141,6 @@ task('deposit-ovmeth', 'Deposits ether onto L2 ovm_eth(WETH).')
       contracts: contractAddrs,
     })
 
-    const opBalanceBefore = await signer.provider.getBalance(
-      OptimismPortal.address
-    )
-
     const l1BridgeBalanceBefore = await signer.provider.getBalance(
       L1StandardBridge.address
     )
@@ -203,10 +174,6 @@ task('deposit-ovmeth', 'Deposits ether onto L2 ovm_eth(WETH).')
       await sleep(1000)
     }
 
-    const opBalanceAfter = await signer.provider.getBalance(
-      OptimismPortal.address
-    )
-
     const l1BridgeBalanceAfter = await signer.provider.getBalance(
       L1StandardBridge.address
     )
@@ -219,20 +186,19 @@ task('deposit-ovmeth', 'Deposits ether onto L2 ovm_eth(WETH).')
       `L1StandardBridge balance after: ${formatEther(l1BridgeBalanceAfter)}`
     )
 
-    console.log(
-      `OptimismPortal balance before: ${formatEther(opBalanceBefore)}`
-    )
-
-    if (!opBalanceBefore.add(amount).eq(opBalanceAfter)) {
-      throw new Error(`OptimismPortal balance mismatch`)
+    if (!l1BridgeBalanceBefore.add(amount).eq(l1BridgeBalanceAfter)) {
+      throw new Error(`L1StandardBridge balance mismatch`)
     }
 
     const LegacyOVMETH = new hre.ethers.Contract(
       predeploys.LegacyOVMETH,
-      Artifact__LegacyOVMETH.abi
+      Artifact__LegacyOVMETH.abi,
+      l2Signer
     )
 
-    const l2Balance = await LegacyOVMETH.balanceOf(to)
+    const l2Balance = await LegacyOVMETH.balanceOf(
+      typeof to === 'string' ? to : to.address
+    )
     console.log(
       `L2 balance of deposit recipient: ${utils.formatEther(
         l2Balance.toString()
@@ -350,12 +316,12 @@ task('deposit-ovmeth', 'Deposits ether onto L2 ovm_eth(WETH).')
       }
     }
 
-    const opBalanceFinally = await signer.provider.getBalance(
-      OptimismPortal.address
+    const l1BridgeBalanceFinally = await signer.provider.getBalance(
+      L1StandardBridge.address
     )
 
-    if (!opBalanceFinally.add(withdrawAmount).eq(opBalanceAfter)) {
-      throw new Error('OptimismPortal balance mismatch')
+    if (!l1BridgeBalanceFinally.add(withdrawAmount).eq(l1BridgeBalanceAfter)) {
+      throw new Error('L1StandardBridge balance mismatch')
     }
     console.log('Withdrawal success')
   })

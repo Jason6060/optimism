@@ -128,7 +128,10 @@ contract L2StandardBridge is StandardBridge, Semver {
         uint256 _amount,
         bytes calldata _extraData
     ) external payable virtual {
-        if (_l1Token == address(0) && (_l2Token == Predeploys.LEGACY_ERC20_ETH || _l2Token == Predeploys.LEGACY_OVM_ETH)) {
+        if (
+            _l1Token == address(0) &&
+            (_l2Token == Predeploys.LEGACY_ERC20_ETH || _l2Token == Predeploys.LEGACY_OVM_ETH)
+        ) {
             // finalizeBridgeETH(_from, _to, _amount, _extraData);
             finalizeBridgeERC20(_l2Token, address(0), _from, _to, _amount, _extraData);
         } else {
@@ -161,7 +164,15 @@ contract L2StandardBridge is StandardBridge, Semver {
     ) internal {
         if (_l2Token == Predeploys.LEGACY_ERC20_ETH || _l2Token == Predeploys.LEGACY_OVM_ETH) {
             // _initiateBridgeETH(_from, _to, _amount, _minGasLimit, _extraData);
-            _initiateBridgeERC20(_l2Token, address(0), _from, _to, _amount, _minGasLimit, _extraData);
+            _initiateBridgeERC20(
+                _l2Token,
+                address(0),
+                _from,
+                _to,
+                _amount,
+                _minGasLimit,
+                _extraData
+            );
         } else {
             address l1Token = OptimismMintableERC20(_l2Token).l1Token();
             _initiateBridgeERC20(_l2Token, l1Token, _from, _to, _amount, _minGasLimit, _extraData);

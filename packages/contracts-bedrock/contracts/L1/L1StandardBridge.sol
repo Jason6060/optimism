@@ -228,7 +228,15 @@ contract L1StandardBridge is StandardBridge, Semver {
         bytes memory _extraData
     ) internal {
         // _initiateBridgeETH(_from, _to, msg.value, _minGasLimit, _extraData);
-        _initiateBridgeERC20(address(0), Predeploys.LEGACY_OVM_ETH, _from, _to, msg.value, _minGasLimit, _extraData);
+        _initiateBridgeERC20(
+            address(0),
+            Predeploys.LEGACY_OVM_ETH,
+            _from,
+            _to,
+            msg.value,
+            _minGasLimit,
+            _extraData
+        );
     }
 
     /// @notice Internal function for initiating an ERC20 deposit.

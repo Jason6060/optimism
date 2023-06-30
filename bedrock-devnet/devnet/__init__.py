@@ -140,7 +140,6 @@ def devnet_deploy(paths):
         addresses = read_json(paths.addresses_json_path)
     else:
         log.info('Deploying contracts.')
-        # NOTE: perhaps this will get error, run manually.
         run_command([
             'forge', 'script', fqn, '--private-key', private_key,
             '--rpc-url', 'http://127.0.0.1:8545', '--broadcast'
