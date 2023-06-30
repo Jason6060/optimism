@@ -21,7 +21,7 @@ var (
 	// l1PredeployNamespace represents the namespace of L1 predeploys
 	l1PredeployNamespace = common.HexToAddress("0x6900000000000000000000000000000000000000")
 	// bigL2PredeployNamespace represents the predeploy namespace as a big.Int
-	bigL2PredeployNamespace = new(big.Int).SetBytes(l2PredeployNamespace.Bytes())
+	BigL2PredeployNamespace = new(big.Int).SetBytes(l2PredeployNamespace.Bytes())
 	// bigL1PredeployNamespace represents the predeploy namespace as a big.Int
 	bigL1PredeployNamespace = new(big.Int).SetBytes(l1PredeployNamespace.Bytes())
 	// bigCodeNamespace represents the predeploy namespace as a big.Int
@@ -91,7 +91,7 @@ func IsL1DevPredeploy(addr common.Address) bool {
 }
 
 func IsL2DevPredeploy(addr common.Address) bool {
-	return bytes.Equal(addr[0:2], []byte{0x42, 0x00})
+	return bytes.Equal(addr[0:2], []byte{0x42, 0x00}) || addr == common.HexToAddress("0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000")
 }
 
 // GetBlockFromTag will resolve a Block given an rpc block tag

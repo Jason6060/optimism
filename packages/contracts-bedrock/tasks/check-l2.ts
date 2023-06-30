@@ -38,10 +38,15 @@ const checkPredeploys = async (
     predeploys.ProxyAdmin,
   ])
 
+  // We only check predeploys 0x420..00 through 0x420..FF on the mainnet network to
+  // reduce the probability of an RPC timeout. After the migration, all predeploys
+  // from 0x420..00 through 0x420..07FF should be checked.
+  const maxCheck = hre.network.name === 'mainnet' ? 256 : 2048
+
   const codeReq = []
   const slotReq = []
   // First loop for requests
-  for (let i = 0; i < 2048; i++) {
+  for (let i = 0; i < maxCheck; i++) {
     const num = hre.ethers.utils.hexZeroPad('0x' + i.toString(16), 2)
     const addr = hre.ethers.utils.getAddress(
       hre.ethers.utils.hexConcat([prefix, num])
@@ -57,7 +62,7 @@ const checkPredeploys = async (
   const slotRes = await Promise.all(slotReq)
 
   // Second loop for response checks
-  for (let i = 0; i < 2048; i++) {
+  for (let i = 0; i < maxCheck; i++) {
     const num = hre.ethers.utils.hexZeroPad('0x' + i.toString(16), 2)
     const addr = hre.ethers.utils.getAddress(
       hre.ethers.utils.hexConcat([prefix, num])
@@ -79,7 +84,7 @@ const checkPredeploys = async (
       throw new Error(`incorrect admin slot in ${addr}`)
     }
 
-    if (i % 200 === 0) {
+    if (i % (maxCheck / 4) === 0) {
       console.log(`Checked through ${addr}`)
     }
   }
@@ -186,7 +191,16 @@ const checkGenesisMagic = async (
 
     const L2OutputOracle = new hre.ethers.Contract(address, [abi], l1Provider)
 
-    startingBlockNumber = await L2OutputOracle.startingBlockNumber()
+    // In the migration, the L2OutputOracle proxy is not yet initialized when we
+    // want to run this script. Fall back on the local config if we get an error
+    // fetching the starting block number.
+    try {
+      startingBlockNumber = await L2OutputOracle.startingBlockNumber()
+    } catch (e) {
+      console.log(`Error fetching startingBlockNumber:\n${e.message}`)
+      console.log('Falling back to local config.')
+      startingBlockNumber = hre.deployConfig.l2OutputOracleStartingBlockNumber
+    }
   } else {
     // We do not have a connection to the L1 chain, use the local config
     // The `--network` flag must be set to the L1 network
@@ -200,7 +214,9 @@ const checkGenesisMagic = async (
   const extradata = block.extraData
 
   if (extradata !== magic) {
-    throw new Error('magic value in extradata does not match')
+    throw new Error(
+      `magic value in extradata does not match: got ${extradata}, expected ${magic}`
+    )
   }
 }
 
@@ -218,7 +234,7 @@ const check = {
       signer
     )
 
-    await assertSemver(LegacyMessagePasser, 'LegacyMessagePasser')
+    await assertSemver(LegacyMessagePasser, 'LegacyMessagePasser', '1.0.1')
     await checkProxy(hre, 'LegacyMessagePasser', signer.provider)
     await assertProxy(hre, 'LegacyMessagePasser', signer.provider)
   },
@@ -233,7 +249,7 @@ const check = {
       signer
     )
 
-    await assertSemver(DeployerWhitelist, 'DeployerWhitelist')
+    await assertSemver(DeployerWhitelist, 'DeployerWhitelist', '1.0.1')
 
     const owner = await DeployerWhitelist.owner()
     assert(owner === hre.ethers.constants.AddressZero)
@@ -262,7 +278,7 @@ const check = {
     await assertSemver(
       L2CrossDomainMessenger,
       'L2CrossDomainMessenger',
-      '1.4.0'
+      '1.4.1'
     )
 
     const xDomainMessageSenderSlot = await signer.provider.getStorageAt(
@@ -335,7 +351,7 @@ const check = {
       signer
     )
 
-    await assertSemver(GasPriceOracle, 'GasPriceOracle')
+    await assertSemver(GasPriceOracle, 'GasPriceOracle', '1.0.1')
 
     const decimals = await GasPriceOracle.decimals()
     assert(decimals.eq(6))
@@ -353,7 +369,7 @@ const check = {
       signer
     )
 
-    await assertSemver(L2StandardBridge, 'L2StandardBridge', '1.1.0')
+    await assertSemver(L2StandardBridge, 'L2StandardBridge', '1.1.1')
 
     const OTHER_BRIDGE = await L2StandardBridge.OTHER_BRIDGE()
     assert(OTHER_BRIDGE !== hre.ethers.constants.AddressZero)
@@ -376,7 +392,7 @@ const check = {
       signer
     )
 
-    await assertSemver(SequencerFeeVault, 'SequencerFeeVault', '1.1.0')
+    await assertSemver(SequencerFeeVault, 'SequencerFeeVault', '1.2.1')
 
     const RECIPIENT = await SequencerFeeVault.RECIPIENT()
     assert(RECIPIENT !== hre.ethers.constants.AddressZero)
@@ -389,6 +405,10 @@ const check = {
     const MIN_WITHDRAWAL_AMOUNT =
       await SequencerFeeVault.MIN_WITHDRAWAL_AMOUNT()
     console.log(`  - MIN_WITHDRAWAL_AMOUNT: ${MIN_WITHDRAWAL_AMOUNT}`)
+
+    const WITHDRAWAL_NETWORK = await SequencerFeeVault.WITHDRAWAL_NETWORK()
+    assert(WITHDRAWAL_NETWORK < 2)
+    console.log(`  - WITHDRAWAL_NETWORK: ${WITHDRAWAL_NETWORK}`)
 
     await checkProxy(hre, 'SequencerFeeVault', signer.provider)
     await assertProxy(hre, 'SequencerFeeVault', signer.provider)
@@ -408,7 +428,7 @@ const check = {
     await assertSemver(
       OptimismMintableERC20Factory,
       'OptimismMintableERC20Factory',
-      '1.1.0'
+      '1.1.1'
     )
 
     const BRIDGE = await OptimismMintableERC20Factory.BRIDGE()
@@ -426,7 +446,7 @@ const check = {
       signer
     )
 
-    await assertSemver(L1BlockNumber, 'L1BlockNumber')
+    await assertSemver(L1BlockNumber, 'L1BlockNumber', '1.0.1')
 
     await checkProxy(hre, 'L1BlockNumber', signer.provider)
     await assertProxy(hre, 'L1BlockNumber', signer.provider)
@@ -440,50 +460,10 @@ const check = {
       signer
     )
 
-    await assertSemver(L1Block, 'L1Block')
+    await assertSemver(L1Block, 'L1Block', '1.0.1')
 
     await checkProxy(hre, 'L1Block', signer.provider)
     await assertProxy(hre, 'L1Block', signer.provider)
-  },
-  // LegacyERC20ETH
-  // - not behind a proxy
-  // - check name
-  // - check symbol
-  // - check decimals
-  // - check BRIDGE
-  // - check REMOTE_TOKEN
-  // - totalSupply should be set to 0
-  LegacyERC20ETH: async (hre: HardhatRuntimeEnvironment, signer: Signer) => {
-    const LegacyERC20ETH = await hre.ethers.getContractAt(
-      'LegacyERC20ETH',
-      predeploys.LegacyERC20ETH,
-      signer
-    )
-
-    const name = await LegacyERC20ETH.name()
-    assert(name === 'Ether')
-    console.log(`  - name: ${name}`)
-
-    const symbol = await LegacyERC20ETH.symbol()
-    assert(symbol === 'ETH')
-    console.log(`  - symbol: ${symbol}`)
-
-    const decimals = await LegacyERC20ETH.decimals()
-    assert(decimals === 18)
-    console.log(`  - decimals: ${decimals}`)
-
-    const BRIDGE = await LegacyERC20ETH.BRIDGE()
-    assert(BRIDGE === predeploys.L2StandardBridge)
-
-    const REMOTE_TOKEN = await LegacyERC20ETH.REMOTE_TOKEN()
-    assert(REMOTE_TOKEN === hre.ethers.constants.AddressZero)
-
-    const totalSupply = await LegacyERC20ETH.totalSupply()
-    assert(totalSupply.eq(0))
-    console.log(`  - totalSupply: ${totalSupply}`)
-
-    await checkProxy(hre, 'LegacyERC20ETH', signer.provider)
-    // No proxy at this address, don't call assertProxy
   },
   // WETH9
   // - check name
@@ -546,7 +526,7 @@ const check = {
       signer
     )
 
-    await assertSemver(L2ERC721Bridge, 'L2ERC721Bridge', '1.1.0')
+    await assertSemver(L2ERC721Bridge, 'L2ERC721Bridge', '1.1.1')
 
     const MESSENGER = await L2ERC721Bridge.MESSENGER()
     assert(MESSENGER !== hre.ethers.constants.AddressZero)
@@ -574,7 +554,7 @@ const check = {
     await assertSemver(
       OptimismMintableERC721Factory,
       'OptimismMintableERC721Factory',
-      '1.2.0'
+      '1.2.1'
     )
 
     const BRIDGE = await OptimismMintableERC721Factory.BRIDGE()
@@ -619,7 +599,7 @@ const check = {
       signer
     )
 
-    await assertSemver(BaseFeeVault, 'BaseFeeVault', '1.1.0')
+    await assertSemver(BaseFeeVault, 'BaseFeeVault', '1.2.1')
 
     const MIN_WITHDRAWAL_AMOUNT = await BaseFeeVault.MIN_WITHDRAWAL_AMOUNT()
     console.log(`  - MIN_WITHDRAWAL_AMOUNT: ${MIN_WITHDRAWAL_AMOUNT}`)
@@ -627,6 +607,10 @@ const check = {
     const RECIPIENT = await BaseFeeVault.RECIPIENT()
     assert(RECIPIENT !== hre.ethers.constants.AddressZero)
     yell(`  - RECIPIENT: ${RECIPIENT}`)
+
+    const WITHDRAWAL_NETWORK = await BaseFeeVault.WITHDRAWAL_NETWORK()
+    assert(WITHDRAWAL_NETWORK < 2)
+    console.log(`  - WITHDRAWAL_NETWORK: ${WITHDRAWAL_NETWORK}`)
 
     await checkProxy(hre, 'BaseFeeVault', signer.provider)
     await assertProxy(hre, 'BaseFeeVault', signer.provider)
@@ -642,7 +626,7 @@ const check = {
       signer
     )
 
-    await assertSemver(L1FeeVault, 'L1FeeVault', '1.1.0')
+    await assertSemver(L1FeeVault, 'L1FeeVault', '1.2.1')
 
     const MIN_WITHDRAWAL_AMOUNT = await L1FeeVault.MIN_WITHDRAWAL_AMOUNT()
     console.log(`  - MIN_WITHDRAWAL_AMOUNT: ${MIN_WITHDRAWAL_AMOUNT}`)
@@ -650,6 +634,10 @@ const check = {
     const RECIPIENT = await L1FeeVault.RECIPIENT()
     assert(RECIPIENT !== hre.ethers.constants.AddressZero)
     yell(`  - RECIPIENT: ${RECIPIENT}`)
+
+    const WITHDRAWAL_NETWORK = await L1FeeVault.WITHDRAWAL_NETWORK()
+    assert(WITHDRAWAL_NETWORK < 2)
+    console.log(`  - WITHDRAWAL_NETWORK: ${WITHDRAWAL_NETWORK}`)
 
     await checkProxy(hre, 'L1FeeVault', signer.provider)
     await assertProxy(hre, 'L1FeeVault', signer.provider)
@@ -666,7 +654,7 @@ const check = {
       signer
     )
 
-    await assertSemver(L2ToL1MessagePasser, 'L2ToL1MessagePasser')
+    await assertSemver(L2ToL1MessagePasser, 'L2ToL1MessagePasser', '1.0.1')
 
     const MESSAGE_VERSION = await L2ToL1MessagePasser.MESSAGE_VERSION()
     console.log(`  - MESSAGE_VERSION: ${MESSAGE_VERSION}`)

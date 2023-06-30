@@ -15,6 +15,8 @@ import { OptimismMintableERC20 } from "../universal/OptimismMintableERC20.sol";
 import { OptimismPortal } from "../L1/OptimismPortal.sol";
 import { L1CrossDomainMessenger } from "../L1/L1CrossDomainMessenger.sol";
 import { L2CrossDomainMessenger } from "../L2/L2CrossDomainMessenger.sol";
+import { SequencerFeeVault } from "../L2/SequencerFeeVault.sol";
+import { FeeVault } from "../universal/FeeVault.sol";
 import { AddressAliasHelper } from "../vendor/AddressAliasHelper.sol";
 import { LegacyERC20ETH } from "../legacy/LegacyERC20ETH.sol";
 import { Predeploys } from "../libraries/Predeploys.sol";
@@ -122,6 +124,26 @@ contract L2OutputOracle_Initializer is CommonTest {
         vm.warp(oracle.computeL2Timestamp(_nextBlockNumber) + 1);
     }
 
+    /// @dev Helper function to propose an output.
+    function proposeAnotherOutput() public {
+        bytes32 proposedOutput2 = keccak256(abi.encode());
+        uint256 nextBlockNumber = oracle.nextBlockNumber();
+        uint256 nextOutputIndex = oracle.nextOutputIndex();
+        warpToProposeTime(nextBlockNumber);
+        uint256 proposedNumber = oracle.latestBlockNumber();
+
+        // Ensure the submissionInterval is enforced
+        assertEq(nextBlockNumber, proposedNumber + submissionInterval);
+
+        vm.roll(nextBlockNumber + 1);
+
+        vm.expectEmit(true, true, true, true);
+        emit OutputProposed(proposedOutput2, nextOutputIndex, nextBlockNumber, block.timestamp);
+
+        vm.prank(proposer);
+        oracle.proposeL2Output(proposedOutput2, nextBlockNumber, 0, 0);
+    }
+
     function setUp() public virtual override {
         super.setUp();
         guardian = makeAddr("guardian");
@@ -208,6 +230,7 @@ contract Messenger_Initializer is Portal_Initializer {
     L1CrossDomainMessenger internal L1Messenger;
     L2CrossDomainMessenger internal L2Messenger =
         L2CrossDomainMessenger(Predeploys.L2_CROSS_DOMAIN_MESSENGER);
+    address internal Metis = 0x69000000000000000000000000000000000000A0;
 
     event SentMessage(
         address indexed target,
@@ -389,7 +412,7 @@ contract Bridge_Initializer is Messenger_Initializer {
             abi.encode(true)
         );
         vm.startPrank(multisig);
-        proxy.setCode(address(new L1StandardBridge(payable(address(L1Messenger)))).code);
+        proxy.setCode(address(new L1StandardBridge(payable(address(L1Messenger)), Metis)).code);
         vm.clearMockedCalls();
         address L1Bridge_Impl = proxy.getImplementation();
         vm.stopPrank();
@@ -401,7 +424,7 @@ contract Bridge_Initializer is Messenger_Initializer {
 
         // Deploy the L2StandardBridge, move it to the correct predeploy
         // address and then initialize it
-        L2StandardBridge l2B = new L2StandardBridge(payable(proxy));
+        L2StandardBridge l2B = new L2StandardBridge(payable(proxy), address(0));
         vm.etch(Predeploys.L2_STANDARD_BRIDGE, address(l2B).code);
         L2Bridge = L2StandardBridge(payable(Predeploys.L2_STANDARD_BRIDGE));
 
@@ -486,6 +509,20 @@ contract ERC721Bridge_Initializer is Messenger_Initializer {
         vm.label(address(L1Bridge), "L1ERC721Bridge");
         vm.label(address(L2Bridge), "L2ERC721Bridge");
     }
+}
+
+contract FeeVault_Initializer is Bridge_Initializer {
+    SequencerFeeVault vault = SequencerFeeVault(payable(Predeploys.SEQUENCER_FEE_WALLET));
+    address constant recipient = address(1024);
+
+    event Withdrawal(uint256 value, address to, address from);
+
+    event Withdrawal(
+        uint256 value,
+        address to,
+        address from,
+        FeeVault.WithdrawalNetwork withdrawalNetwork
+    );
 }
 
 contract FFIInterface is Test {
